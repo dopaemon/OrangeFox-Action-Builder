@@ -24,7 +24,7 @@ on:
       DEVICE_TREE_BRANCH:
         description: 'OrangeFox Device Tree Branch'
         required: true
-        default: 'android-14'
+        default: 'fox_12.1'
       DEVICE_PATH:
         description: 'Specify your Device Path'
         required: true
@@ -42,6 +42,15 @@ on:
         - boot
         - recovery
         - vendorboot
+      BUILD_ANDROID:
+        description: 'Android Version Bootctrl'
+        required: true
+        default: 'lineage-22.1-caf'
+        type: choice
+        options:
+        - lineage-22.1-caf
+        - lineage-21.0-caf
+        - lineage-20.0-caf
 
 jobs:
   build:
@@ -54,7 +63,7 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-              
+
     - name: Clean-up
       uses: rokibhasansagar/slimhub_actions@main
 
@@ -62,7 +71,7 @@ jobs:
       uses: pierotofy/set-swap-space@master
       with:
         swap-size-gb: 12
-      
+
     - name: Build Environment
       run: |
         sudo apt install aria2 -y
@@ -74,7 +83,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         max-size: "10G"
-      
+
     - name: Set-up Manifest
       if: github.event.inputs.MANIFEST_BRANCH == '11.0' || github.event.inputs.MANIFEST_BRANCH == '12.1'
       run: |
@@ -85,6 +94,11 @@ jobs:
         git clone https://gitlab.com/OrangeFox/sync.git -b master
         cd sync
         ./orangefox_sync.sh --branch ${{ github.event.inputs.MANIFEST_BRANCH }} --path ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+
+    - name: Clone bootctrl
+        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ github.event.inputs.MANIFEST_BRANCH }}
+        rm -rf hardware/qcom-caf/bootctrl
+        git clone -b ${{ github.event.inputs.BUILD_ANDROID }} --single-branch --depth=1 https://github.com/LineageOS/android_hardware_qcom_bootctrl.git hardware/qcom-caf/bootctrl
 
     - name: Clone Device Tree
       run: |
